@@ -3,6 +3,11 @@ name = "btv"
 compatibility_date = "2024-10-22"
 pages_build_output_dir = "./build/client"
 
+kv_namespaces = [
+    { binding = "OAUTH_SESSIONS", id = "30a6cd7c6c5f4de3bdba386b7aecf489" },
+    { binding = "OAUTH_STATES", id = "900e9fda1e2246438cf3709cf72a4100" },
+]
+
 # Automatically place your workloads in an optimal location to minimize latency.
 # If you are running back-end logic in a Pages Function, running it closer to your back-end infrastructure
 # rather than the end user may result in better performance.

@@ -1,28 +1,27 @@
-import type { LinksFunction } from "@remix-run/cloudflare";
 import {
+  useLoaderData,
+  ScrollRestoration,
+  Scripts,
   Links,
   Meta,
   Outlet,
-  Scripts,
-  ScrollRestoration,
 } from "@remix-run/react";
+import { getSession } from "~/utils/session.server";
+import LoginButton from "~/components/LoginButton";
+import MultiplayerContextProvider from "./providers/multiplayer";
+import type { LoaderFunctionArgs } from "@remix-run/cloudflare";
+import LogoutButton from "./components/LogoutButton";
 
-import "./tailwind.css";
+export async function loader({ request }: LoaderFunctionArgs) {
+  const session = await getSession(request.headers.get("Cookie"));
+  const did = session.get("did");
 
-export const links: LinksFunction = () => [
-  { rel: "preconnect", href: "https://fonts.googleapis.com" },
-  {
-    rel: "preconnect",
-    href: "https://fonts.gstatic.com",
-    crossOrigin: "anonymous",
-  },
-  {
-    rel: "stylesheet",
-    href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
-  },
-];
+  return {
+    isAuthenticated: Boolean(did),
+  };
+}
 
-export function Layout({ children }: { children: React.ReactNode }) {
+export default function App() {
   return (
     <html lang="en">
       <head>
@@ -32,14 +31,20 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body>
-        {children}
-        <ScrollRestoration />
-        <Scripts />
+        <MultiplayerContextProvider>
+          <div className="min-h-screen">
+            <div className="flex h-screen items-center justify-center">
+              <LoginButton />
+            </div>
+            <nav className="p-4 border-b">
+              <LogoutButton />
+            </nav>
+            <Outlet />
+          </div>
+          <ScrollRestoration />
+          <Scripts />
+        </MultiplayerContextProvider>
       </body>
     </html>
   );
-}
-
-export default function App() {
-  return <Outlet />;
 }
