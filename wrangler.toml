@@ -4,8 +4,8 @@ compatibility_date = "2024-10-22"
 pages_build_output_dir = "./build/client"
 
 kv_namespaces = [
-    { binding = "OAUTH_SESSIONS", id = "30a6cd7c6c5f4de3bdba386b7aecf489" },
-    { binding = "OAUTH_STATES", id = "900e9fda1e2246438cf3709cf72a4100" },
+    { binding = "OAUTH_SESSIONS", id = "OAUTH_SESSIONS", preview_id = "OAUTH_SESSIONS_PREVIEW" },
+    { binding = "OAUTH_STATES", id = "OAUTH_STATES", preview_id = "OAUTH_STATES_PREVIEW" },
 ]
 
 # Automatically place your workloads in an optimal location to minimize latency.

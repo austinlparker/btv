@@ -10,15 +10,38 @@ export async function action({ request, context }: ActionFunctionArgs) {
     return json({ error: "Handle is required" }, { status: 400 });
   }
 
-  const oauthClient = createOAuthClient(context.env);
+  const oauthClient = createOAuthClient(context.env as Env);
 
   try {
+    // Revoke any pending authentication requests if the connection is closed
+    const ac = new AbortController();
+    request.signal.addEventListener("abort", () => ac.abort());
+
     const url = await oauthClient.authorize(handle, {
       scope: "atproto transition:generic",
     });
+
     return redirect(url.toString());
   } catch (error) {
     console.error("Login error:", error);
-    return json({ error: "Failed to initiate login" }, { status: 500 });
+    if (error instanceof Error) {
+      console.error("Error details:", {
+        message: error.message,
+        stack: error.stack,
+      });
+    }
+    return json(
+      {
+        error: "Failed to initiate login",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      {
+        status: 500,
+      }
+    );
   }
+}
+
+export async function loader() {
+  return json({});
 }

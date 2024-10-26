@@ -6,15 +6,15 @@ export default function VideoControls({
   onPlayback: (state: "play" | "pause" | "skip") => void;
 }) {
   return (
-    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 backdrop-blur-sm rounded-full px-6 py-3 flex items-center space-x-4">
+    <div className="bg-black/40 backdrop-blur-sm rounded-full px-8 py-4 flex items-center space-x-6">
       <button
         onClick={() => onPlayback(isPlaying ? "pause" : "play")}
         className="text-white hover:text-blue-400 transition-colors"
       >
         {isPlaying ? (
-          <PauseIcon className="w-6 h-6" />
+          <PauseIcon className="w-8 h-8" />
         ) : (
-          <PlayIcon className="w-6 h-6" />
+          <PlayIcon className="w-8 h-8" />
         )}
       </button>
 
@@ -22,7 +22,7 @@ export default function VideoControls({
         onClick={() => onPlayback("skip")}
         className="text-white hover:text-blue-400 transition-colors"
       >
-        <SkipIcon className="w-6 h-6" />
+        <SkipIcon className="w-8 h-8" />
       </button>
     </div>
   );

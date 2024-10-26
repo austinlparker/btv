@@ -13,6 +13,12 @@ declare module "@remix-run/cloudflare" {
 
 export default defineConfig({
   envDir: ".",
+  server: {
+    host: "127.0.0.1",
+  },
+  ssr: {
+    noExternal: ["react-player"],
+  },
   plugins: [
     remixCloudflareDevProxy(),
     remix({

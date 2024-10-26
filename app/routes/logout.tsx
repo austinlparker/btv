@@ -8,7 +8,7 @@ export async function action({ request, context }: ActionFunctionArgs) {
   const did = session.get("did");
 
   if (did) {
-    const oauthClient = createOAuthClient(context.env);
+    const oauthClient = createOAuthClient(context.env as Env);
     await oauthClient.revoke(did);
   }
 

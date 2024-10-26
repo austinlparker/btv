@@ -21,68 +21,76 @@ export default function ChatWindow({
   useEffect(() => {
     if (!socket) return;
 
-    socket.addEventListener("message", (event) => {
-      const data = JSON.parse(event.data);
-      if (data.type === "chat") {
-        setMessages((prev) => [
-          ...prev,
-          {
-            message: data.message,
-            did: data.did,
-            timestamp: Date.now(),
-          },
-        ]);
+    const handleMessage = (event: MessageEvent) => {
+      console.log("Received websocket message:", event.data);
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === "chat") {
+          console.log("Adding chat message:", data);
+          setMessages((prev) => [
+            ...prev,
+            {
+              message: data.message,
+              did: data.did,
+              timestamp: data.timestamp || Date.now(),
+            },
+          ]);
+        }
+      } catch (error) {
+        console.error("Error handling message:", error);
       }
-    });
-  }, [socket]);
+    };
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    socket.addEventListener("message", handleMessage);
+    return () => socket.removeEventListener("message", handleMessage);
+  }, [socket]);
 
   const sendMessage = (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || !socket) return;
 
-    socket.send(
-      JSON.stringify({
-        type: "chat",
-        message: input,
-        did,
-      })
-    );
+    const message = {
+      type: "chat",
+      message: input.trim(),
+      did,
+    };
+
+    console.log("Sending message:", message);
+    socket.send(JSON.stringify(message));
     setInput("");
   };
 
+  // Add visual feedback for the current user's messages
+  const isOwnMessage = (messageDid: string) => messageDid === did;
+
   return (
-    <div className="absolute left-0 top-0 h-full w-96 p-4 flex flex-col">
+    <div className="h-full p-4 flex flex-col gap-4">
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto space-y-4">
+      <div className="flex-1 overflow-y-auto space-y-4 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
         {messages.map((msg, i) => (
           <div
             key={i}
-            className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-lg transform hover:scale-105 transition-transform duration-200 max-w-[80%] ml-4"
-            style={{
-              clipPath:
-                "polygon(0% 0%, 100% 0%, 100% 75%, 75% 75%, 75% 100%, 50% 75%, 0% 75%)",
-            }}
+            className={`${
+              isOwnMessage(msg.did) ? "ml-auto bg-blue-500/40" : "bg-black/40"
+            } backdrop-blur-sm rounded-lg p-4 text-white max-w-[90%] transform transition-all duration-200 hover:scale-102`}
           >
-            <p className="text-sm text-gray-800">{msg.message}</p>
-            <p className="text-xs text-gray-500 mt-2">
-              {new Date(msg.timestamp).toLocaleTimeString()}
-            </p>
+            <p className="text-sm">{msg.message}</p>
+            <div className="flex justify-between items-center mt-2 text-xs text-gray-400">
+              <span>{msg.did.split(":")[1].substring(0, 8)}</span>
+              <span>{new Date(msg.timestamp).toLocaleTimeString()}</span>
+            </div>
           </div>
         ))}
         <div ref={messagesEndRef} />
       </div>
 
       {/* Input */}
-      <form onSubmit={sendMessage} className="mt-4">
+      <form onSubmit={sendMessage} className="mt-auto">
         <input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          className="w-full bg-white/80 backdrop-blur-sm rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full bg-black/40 backdrop-blur-sm text-white rounded-full px-6 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
           placeholder="Type a message..."
         />
       </form>

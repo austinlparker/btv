@@ -4,66 +4,63 @@ type State = {
   total: number;
 };
 
-type PlaybackMessage = {
-  type: "playback";
-  state: "play" | "pause" | "skip";
-};
-
 type ChatMessage = {
   type: "chat";
   message: string;
   did: string;
 };
 
-type ConnectionsMessage = {
-  type: "connections";
-  count: number;
+type PlaybackMessage = {
+  type: "playback";
+  state: "play" | "pause" | "skip";
 };
 
+type Message = ChatMessage | PlaybackMessage;
+
 export default class FeedParty implements Party.Server {
-  // eslint-disable-next-line no-useless-constructor
-  constructor(public room: Party.Room) {}
+  constructor(readonly room: Party.Room) {}
 
   state: State = {
     total: 0,
   };
 
-  static options = {
-    hibernate: true,
-  };
-
-  async onConnect(connection: Party.Connection): Promise<void> {
-    console.log(connection.id, "connected");
+  onConnect(conn: Party.Connection) {
+    console.log("Client connected:", conn.id);
     this.state.total++;
     this.room.broadcast(JSON.stringify(this.state));
   }
 
-  async onClose(connection: Party.Connection): Promise<void> {
-    console.log(connection.id, "disconnected");
+  onClose(conn: Party.Connection) {
+    console.log("Client disconnected:", conn.id);
     this.state.total--;
     this.room.broadcast(JSON.stringify(this.state));
   }
 
-  async onError(connection: Party.Connection, error: Error): Promise<void> {
-    console.error(error);
-    await this.onClose(connection);
-  }
+  onMessage(message: string, sender: Party.Connection) {
+    try {
+      const data = JSON.parse(message) as Message;
+      console.log("Received message:", data);
 
-  async onMessage(
-    message: string | ArrayBuffer | ArrayBufferView,
-    sender: Party.Connection
-  ): Promise<void> {
-    const data = JSON.parse(message.toString());
-    console.log(data);
-    switch (data.type) {
-      case "playback": {
-        this.room.broadcast(message as string);
-        break;
+      switch (data.type) {
+        case "chat":
+          // Broadcast to everyone including sender
+          this.room.broadcast(
+            JSON.stringify({
+              type: "chat",
+              message: data.message,
+              did: data.did,
+              timestamp: Date.now(),
+            })
+          );
+          break;
+
+        case "playback":
+          // Broadcast to everyone except sender
+          this.room.broadcast(message, [sender.id]);
+          break;
       }
-      case "chat": {
-        this.room.broadcast(message as string, [sender.id]);
-        break;
-      }
+    } catch (e) {
+      console.error("Failed to parse message:", e);
     }
   }
 }

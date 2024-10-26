@@ -11,6 +11,7 @@ import LoginButton from "~/components/LoginButton";
 import MultiplayerContextProvider from "./providers/multiplayer";
 import type { LoaderFunctionArgs } from "@remix-run/cloudflare";
 import LogoutButton from "./components/LogoutButton";
+import "./tailwind.css";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const session = await getSession(request.headers.get("Cookie"));
@@ -22,6 +23,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
 }
 
 export default function App() {
+  const { isAuthenticated } = useLoaderData<typeof loader>();
+
   return (
     <html lang="en">
       <head>
@@ -33,13 +36,18 @@ export default function App() {
       <body>
         <MultiplayerContextProvider>
           <div className="min-h-screen">
-            <div className="flex h-screen items-center justify-center">
-              <LoginButton />
-            </div>
-            <nav className="p-4 border-b">
-              <LogoutButton />
-            </nav>
-            <Outlet />
+            {!isAuthenticated ? (
+              <div className="flex h-screen items-center justify-center">
+                <LoginButton />
+              </div>
+            ) : (
+              <>
+                <nav className="p-4 border-b">
+                  <LogoutButton />
+                </nav>
+                <Outlet />
+              </>
+            )}
           </div>
           <ScrollRestoration />
           <Scripts />
