@@ -5,7 +5,6 @@ import type {
   NodeSavedState,
 } from "@atproto/oauth-client";
 
-// Cookie session storage for user sessions
 export const { getSession, commitSession, destroySession } =
   createCookieSessionStorage({
     cookie: {
@@ -19,7 +18,6 @@ export const { getSession, commitSession, destroySession } =
     },
   });
 
-// Storage interfaces for AT Protocol OAuth
 const createMemoryStore = <T>() => {
   const store = new Map<string, T>();
   return {
@@ -33,7 +31,6 @@ const createMemoryStore = <T>() => {
   };
 };
 
-// Development memory stores
 const DEV_SESSION_STORE = createMemoryStore<NodeSavedSession>();
 const DEV_STATE_STORE = createMemoryStore<NodeSavedState>();
 

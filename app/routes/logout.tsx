@@ -7,9 +7,13 @@ export async function action({ request, context }: ActionFunctionArgs) {
   const session = await getSession(request.headers.get("Cookie"));
   const did = session.get("did");
 
-  if (did) {
-    const oauthClient = createOAuthClient(context.env as Env);
-    await oauthClient.revoke(did);
+  try {
+    if (did) {
+      const oauthClient = createOAuthClient(context.env as Env);
+      await oauthClient.revoke(did);
+    }
+  } catch (error) {
+    console.error("Error revoking token:", error);
   }
 
   return redirect("/", {

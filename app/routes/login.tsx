@@ -13,12 +13,11 @@ export async function action({ request, context }: ActionFunctionArgs) {
   const oauthClient = createOAuthClient(context.env as Env);
 
   try {
-    // Revoke any pending authentication requests if the connection is closed
     const ac = new AbortController();
     request.signal.addEventListener("abort", () => ac.abort());
 
     const url = await oauthClient.authorize(handle, {
-      scope: "atproto transition:generic",
+      scope: "atproto",
     });
 
     return redirect(url.toString());
@@ -35,9 +34,7 @@ export async function action({ request, context }: ActionFunctionArgs) {
         error: "Failed to initiate login",
         details: error instanceof Error ? error.message : "Unknown error",
       },
-      {
-        status: 500,
-      }
+      { status: 500 }
     );
   }
 }

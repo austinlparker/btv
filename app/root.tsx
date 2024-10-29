@@ -16,8 +16,13 @@ import "./tailwind.css";
 export async function loader({ request }: LoaderFunctionArgs) {
   const session = await getSession(request.headers.get("Cookie"));
   const did = session.get("did");
+  const handle = session.get("handle");
+  const displayName = session.get("displayName");
 
   return {
+    did,
+    handle,
+    displayName,
     isAuthenticated: Boolean(did),
   };
 }

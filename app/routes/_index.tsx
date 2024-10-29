@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParty } from "~/providers/multiplayer";
 import ChatWindow from "~/components/ChatWindow";
-import VideoControls from "~/components/VideoControls";
+import LogoutButton from "~/components/LogoutButton";
 import { useLoaderData } from "@remix-run/react";
 import { getSession } from "~/utils/session.server";
 import type { LoaderFunctionArgs } from "@remix-run/cloudflare";
@@ -16,9 +16,26 @@ function ClientOnly({ children }: { children: React.ReactNode }) {
 
 // Separate the player into its own component
 function VideoPlayer({ playing }: { playing: boolean }) {
-  const [ReactPlayer, setReactPlayer] = useState<ComponentType<any> | null>(
-    null
-  );
+  type ReactPlayerProps = {
+    url: string;
+    playing: boolean;
+    muted: boolean;
+    controls: boolean;
+    width: string;
+    height: string;
+    style?: React.CSSProperties;
+    config?: {
+      youtube?: {
+        playerVars?: {
+          modestbranding?: number;
+          playsinline?: number;
+        };
+      };
+    };
+  };
+
+  const [ReactPlayer, setReactPlayer] =
+    useState<ComponentType<ReactPlayerProps> | null>(null);
 
   useEffect(() => {
     import("react-player/lazy").then((mod) => {
@@ -36,8 +53,9 @@ function VideoPlayer({ playing }: { playing: boolean }) {
 
   return (
     <ReactPlayer
-      url="https://www.youtube.com/watch?v=O9mYwRlucZY"
-      playing={playing}
+      url="https://www.youtube.com/watch?v=rnXIjl_Rzy4"
+      playing={true}
+      muted={true}
       controls={false}
       width="100%"
       height="100%"
@@ -57,14 +75,24 @@ function VideoPlayer({ playing }: { playing: boolean }) {
 export async function loader({ request }: LoaderFunctionArgs) {
   const session = await getSession(request.headers.get("Cookie"));
   const did = session.get("did");
-  return { did };
+  const handle = session.get("handle");
+  const displayName = session.get("displayName");
+
+  return {
+    did,
+    handle,
+    displayName,
+    isAuthenticated: Boolean(did),
+  };
 }
 
 export default function Index() {
   const { socket } = useParty();
-  const { did } = useLoaderData<typeof loader>();
+  const { did, handle, displayName } = useLoaderData<typeof loader>();
   const [total, setTotal] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+
+  console.log("Index loader data:", { did, handle, displayName });
 
   useEffect(() => {
     if (!socket) return;
@@ -80,44 +108,31 @@ export default function Index() {
     });
   }, [socket]);
 
-  const handlePlayback = (state: "play" | "pause" | "skip") => {
-    socket?.send(
-      JSON.stringify({
-        type: "playback",
-        state,
-      })
-    );
-  };
-
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-black">
-      {/* Video Background */}
       <div className="absolute inset-0">
         <ClientOnly>
           <VideoPlayer playing={isPlaying} />
         </ClientOnly>
       </div>
 
-      {/* Overlay Container */}
       <div className="relative z-10 h-full w-full bg-gradient-to-t from-black/60 via-transparent to-black/40">
-        {/* Top Bar */}
         <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-center">
-          {/* Logo/Title */}
           <div className="text-white text-2xl font-bold">bTV</div>
-          {/* Online Count */}
           <div className="bg-black/50 text-white px-4 py-2 rounded-full backdrop-blur-sm">
             {total} watching
           </div>
+          <LogoutButton />
         </div>
 
-        {/* Chat Window - Positioned on the left */}
-        <div className="absolute left-0 top-16 bottom-24 w-96">
-          <ChatWindow did={did} socket={socket} />
-        </div>
-
-        {/* Video Controls - Centered at bottom */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2">
-          <VideoControls isPlaying={isPlaying} onPlayback={handlePlayback} />
+        <div className="absolute left-8 bottom-24 w-96 h-[60vh]">
+          <ChatWindow
+            did={did}
+            handle={handle}
+            displayName={displayName}
+            socket={socket}
+            connected={total}
+          />
         </div>
       </div>
     </div>

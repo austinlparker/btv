@@ -4,10 +4,17 @@ type State = {
   total: number;
 };
 
+type Profile = {
+  handle: string;
+  displayName?: string;
+};
+
 type ChatMessage = {
   type: "chat";
   message: string;
   did: string;
+  profile?: Profile;
+  timestamp?: number;
 };
 
 type PlaybackMessage = {
@@ -15,7 +22,12 @@ type PlaybackMessage = {
   state: "play" | "pause" | "skip";
 };
 
-type Message = ChatMessage | PlaybackMessage;
+type TypingMessage = {
+  type: "typing";
+  did: string;
+};
+
+type Message = ChatMessage | PlaybackMessage | TypingMessage;
 
 export default class FeedParty implements Party.Server {
   constructor(readonly room: Party.Room) {}
@@ -42,21 +54,30 @@ export default class FeedParty implements Party.Server {
       console.log("Received message:", data);
 
       switch (data.type) {
-        case "chat":
-          // Broadcast to everyone including sender
-          this.room.broadcast(
-            JSON.stringify({
-              type: "chat",
-              message: data.message,
-              did: data.did,
-              timestamp: Date.now(),
-            })
-          );
+        case "chat": {
+          const chatMessage = {
+            type: "chat",
+            message: data.message,
+            did: data.did,
+            profile: data.profile,
+            timestamp: Date.now(),
+          };
+          this.room.broadcast(JSON.stringify(chatMessage));
           break;
+        }
 
         case "playback":
-          // Broadcast to everyone except sender
           this.room.broadcast(message, [sender.id]);
+          break;
+
+        case "typing":
+          this.room.broadcast(
+            JSON.stringify({
+              type: "typing",
+              did: data.did,
+            }),
+            [sender.id]
+          );
           break;
       }
     } catch (e) {
